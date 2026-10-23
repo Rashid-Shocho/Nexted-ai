@@ -295,15 +295,31 @@ def test_the_counsellor_answers_and_knows_the_profile():
 
 
 def test_the_fee_question_returns_the_approved_text_and_spends_nothing():
-    from app.core.policy import FEE_RESPONSE
+    from app.core.policy import fee_response
 
     with _Tmp() as tmp:
         service = _build(tmp)
-        out = _run(
-            service.counsellor("s1", _profile("strong"), "how much is your file opening fee?")
-        )
-        assert out["reply"] == FEE_RESPONSE
+        for question in ("how much is your file opening fee?",
+                         "can you tell me the cost of working with nexted?",
+                         "is your service free?"):
+            out = _run(service.counsellor("s1", _profile("strong"), question))
+            assert out["reply"] == fee_response(service.settings.office_phone_display), question
+            assert "office" in out
         assert out["usage"]["used"] == 0      # no model was called
+
+
+def test_reaching_a_counsellor_gets_the_real_office_and_nothing_invented():
+    with _Tmp() as tmp:
+        service = _build(tmp)
+        out = _run(
+            service.counsellor("s1", _profile("strong"), "How can I get in touch with a counselor?")
+        )
+        assert out["usage"]["used"] == 0      # fixed text, no model
+        assert "office" in out
+        reply = out["reply"].lower()
+        assert service.settings.office_phone_display in out["reply"]
+        for invented in ("email", "schedul", "book an", "will contact", "reach out", "whatsapp"):
+            assert invented not in reply, invented
 
 
 def test_a_restricted_university_the_model_mentioned_is_flagged():

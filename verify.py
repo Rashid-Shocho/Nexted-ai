@@ -25,14 +25,14 @@ ROOT = pathlib.Path(__file__).resolve().parent
 MANIFEST: dict[str, str] = {}  # filled in below by MANIFEST_DATA
 
 MANIFEST_DATA = """
-13b73e68c62854e6 .env.example
+d4d1a57f98c5993a .env.example
 fadd557e0489341f .gitignore
 8307a702adbed889 README.md
 e3b0c44298fc1c14 app/__init__.py
 e3b0c44298fc1c14 app/api/__init__.py
 a0aea3b7a34e7801 app/api/schemas.py
 e53e2588812d2815 app/api/service.py
-20146258b2d9d9b7 app/config.py
+f6c3af294eb98a37 app/config.py
 e3b0c44298fc1c14 app/core/__init__.py
 d7f3a5c7bdf927e6 app/core/budget.py
 1ac4e98acfa96beb app/core/catalogue.py
@@ -41,15 +41,15 @@ d7f3a5c7bdf927e6 app/core/budget.py
 4e49fc5f4e1a13e7 app/core/freshness.py
 1032c782327f271e app/core/gaps.py
 d639010a7df332a6 app/core/numbers.py
-af6bd7b72761f3b7 app/core/policy.py
+0ff3ded7443d1d65 app/core/policy.py
 0882408574e07f5e app/core/profile.py
 43bedbf32d184dd6 app/core/restrictions.py
 7a77d3fd76e4111a app/core/search.py
 402d1a24d0687253 app/errors.py
 e3b0c44298fc1c14 app/graphs/__init__.py
-6688a0e02ab24d32 app/graphs/counsellor.py
+5658d1fb56a9ebe1 app/graphs/counsellor.py
 cecc281a75d8efc8 app/graphs/courses.py
-9d26a471de6f768e app/graphs/nodes.py
+4999a1a043108a5d app/graphs/nodes.py
 a409f9a35739ccea app/graphs/runner.py
 9483d708899d2c35 app/graphs/scholarships.py
 20edd7f013cafc73 app/main.py
@@ -58,7 +58,7 @@ e3b0c44298fc1c14 app/providers/__init__.py
 dc598c956cfdc78b app/providers/demo.py
 7fed535de0b24bd3 app/providers/echo.py
 7d3993b544966e9d app/providers/factory.py
-95da0b4ca2f10041 app/providers/http_llm.py
+fa470734b0c6b369 app/providers/http_llm.py
 e3b0c44298fc1c14 app/store/__init__.py
 8e23ac656df2041c app/store/json_store.py
 e3b0c44298fc1c14 app/tools/__init__.py
@@ -66,7 +66,7 @@ bdd1785a0024e494 app/tools/extract.py
 700e4501939b3e28 app/tools/fetch.py
 dcc4cee460a7fc97 app/tools/search_web.py
 e308d335cc177722 app/tracing.py
-f0b3f48c250b2ca7 app/wiring.py
+2f79649f84ee4d1f app/wiring.py
 a431c379c7b11902 examples/pages/course-good.html
 32e6eb028338f20e examples/pages/course-vague.html
 766fab57471276a6 examples/pages/scholarship.html
@@ -80,7 +80,7 @@ f1e5032949ebd4d3 requirements.txt
 e3b0c44298fc1c14 tests/__init__.py
 2fc4bc434c0e3c95 tests/run.py
 2c31d3cb8b66dd85 tests/test_core.py
-907ca946fca13e4f tests/test_service.py
+179d54ea1fd078a1 tests/test_service.py
 9049f819b724a7fc try.py
 """
 

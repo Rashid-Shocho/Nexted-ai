@@ -32,6 +32,21 @@ if not exist ".env" (
   echo A new .env was created from .env.example - add your keys to it.
 )
 
+REM Knowledge base: share the IELTS app's database. DATABASE_URL is copied
+REM from ..\server\.env (no password is kept in this file). The service puts
+REM its tables in their own schema, "nexted_ai", away from Prisma's tables.
+set "DATABASE_URL="
+if exist "..\server\.env" (
+  for /f "usebackq tokens=1,* delims==" %%A in ("..\server\.env") do (
+    if /i "%%A"=="DATABASE_URL" set "DATABASE_URL=%%~B"
+  )
+)
+if defined DATABASE_URL (
+  echo Knowledge base: the IELTS database from server\.env, schema nexted_ai
+) else (
+  echo Knowledge base: no DATABASE_URL in ..\server\.env - using ai\.env or the JSON files
+)
+
 echo.
 echo ===== nextED AI is starting on http://127.0.0.1:8000 =====
 echo Check it:  http://127.0.0.1:8000/health    Try it:  http://127.0.0.1:8000/docs

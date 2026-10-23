@@ -67,7 +67,7 @@ def build_counsellor(settings=None) -> Counsellor:
         from app.kb.pg import KnowledgeBase
 
         embedder = build_embedder(settings)
-        kb = KnowledgeBase(settings.database_url, embedder.dim)
+        kb = KnowledgeBase(settings.database_url, embedder.dim, settings.kb_schema)
         log.info("knowledge base: PostgreSQL, embeddings=%s (%s dims)", embedder.name, embedder.dim)
     else:
         log.info("knowledge base: off (no DATABASE_URL) - JSON files only")

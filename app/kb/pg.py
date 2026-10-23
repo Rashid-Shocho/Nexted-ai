@@ -32,8 +32,11 @@ def _vec(values: Sequence[float] | None) -> str | None:
 
 
 class KnowledgeBase:
-    def __init__(self, database_url: str, dim: int) -> None:
+    def __init__(self, database_url: str, dim: int, schema: str = "") -> None:
         self.database_url = database_url
+        # Own schema (e.g. "nexted_ai") so the tables can sit in a shared
+        # database without mixing with anyone else's. '' = database default.
+        self.schema = schema
         self.dim = dim
         self._pool = None
         self.ready = False
@@ -60,9 +63,18 @@ class KnowledgeBase:
     def _open_sync(self) -> None:
         from psycopg_pool import ConnectionPool
 
+        schema = self.schema
+
+        def configure(conn) -> None:
+            # Every pooled connection works in our schema first, then public
+            # (where the pgvector type may already be installed).
+            if schema:
+                conn.execute(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
+                conn.execute(f'SET search_path TO "{schema}", public')
+
         self._pool = ConnectionPool(
             self.database_url, min_size=1, max_size=8, open=True, timeout=10,
-            kwargs={"autocommit": True},
+            kwargs={"autocommit": True}, configure=configure,
         )
         self._pool.wait(timeout=10)
         self._migrate()

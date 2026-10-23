@@ -226,7 +226,7 @@ async def _main() -> None:
         print("DATABASE_URL is not set in .env - nothing to index.")
         return
     embedder = build_embedder(settings)
-    kb = KnowledgeBase(settings.database_url, embedder.dim)
+    kb = KnowledgeBase(settings.database_url, embedder.dim, settings.kb_schema)
     if not await kb.open():
         print("Could not open the database:", kb.error)
         return

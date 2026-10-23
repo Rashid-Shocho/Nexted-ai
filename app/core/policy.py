@@ -12,11 +12,15 @@ from enum import Enum
 # The approved file-opening fee reply. Do not reword - there is a test that
 # asserts this exact text.
 FEE_RESPONSE = (
-    "Our team will explain the file-opening process and the applicable "
-    "service terms directly. I can help you understand your study options, "
-    "assess your profile and prepare the next steps. Would you like me to "
-    "arrange a consultation with our team?"
+    "You can get the answer to your query from our office. Please contact "
+    "us at {phone}, or visit our office in Banani, Dhaka."
 )
+
+
+def fee_response(phone: str) -> str:
+    """nextED's own fees, costs or charges: the office answers, never the AI
+    (left to itself it told a student the service was "completely free")."""
+    return FEE_RESPONSE.format(phone=phone or "our office number")
 
 DOCUMENT_GUIDANCE = (
     "In general, most applications ask for some combination of: a passport, "
@@ -32,6 +36,32 @@ DOCUMENT_GUIDANCE = (
 )
 
 
+def contact_response(name: str, phone: str, address: str, maps_url: str) -> str:
+    """The reply to "how do I reach a counsellor?" - fixed, never the model.
+
+    Only the ways that really exist. The model, left to itself, offered
+    in-app booking, a callback and an email address - none of which nextED
+    has. So this answer is assembled from the office settings and nothing
+    else.
+    """
+    name = name or "nextED"
+    lines = [f"You can talk to a {name} counsellor directly:", ""]
+    if phone:
+        lines.append(f"- Call us on {phone}")
+    if address:
+        lines.append(f"- Visit our office: {address}")
+    if maps_url:
+        lines.append("- The buttons below call the office or open directions")
+    lines += [
+        "",
+        "Bring your questions about countries, universities, scholarships, "
+        "applications or visas - and your academic documents if you have them "
+        "handy. Meanwhile, I can help you here with your options, your profile "
+        "and the next steps.",
+    ]
+    return "\n".join(lines)
+
+
 class Intent(str, Enum):
     fee_question = "fee_question"
     contact_request = "contact_request"
@@ -41,7 +71,15 @@ class Intent(str, Enum):
     general = "general"
 
 
+# nextED's own fees, costs, charges or "is it free" - however it is asked.
 _FEE = [
+    r"\b(cost|costs|price|pricing|fee|fees|charge|charges|pay|paying|payment|free|money|taka|tk|bdt|package)\b.{0,40}\b(nexted|your (service|services|team|office|company|agency|consultancy|help)|working with (you|nexted)|work with (you|nexted)|using (you|nexted))\b",
+    r"\b(nexted|your (service|services|consultancy|agency|company))\b.{0,30}\b(cost|costs|price|pricing|fee|fees|charge|charges|free|package|payment|pay)\b",
+    r"\b(is|are) (it|this|your service|your services|nexted|you) (free|paid)\b",
+    r"\bdo (i|we) (have|need) to pay (you|nexted|anything)\b",
+    r"\bhow much (do|does|will) (you|nexted)\b",
+    r"(নেক্সটেড|আপনাদের|আপনার).{0,20}(খরচ|ফি|চার্জ|টাকা)",
+    r"(খরচ|ফি|চার্জ|টাকা).{0,20}(নেক্সটেড|আপনাদের)",
     r"\bfile[- ]?open(ing)?\b.{0,20}\b(fee|charge|cost|price|money|taka|tk)\b",
     r"\b(fee|charge|cost|price)\b.{0,25}\bfile\b",
     r"\byour\b.{0,15}\b(service|consultancy|agency)\b.{0,15}\b(fee|charge|cost)\b",
@@ -56,19 +94,41 @@ _DOCS = [
 _CHANCE = [
     r"\b(chance|chances|odds|probability|likelihood)\b",
     r"\bwill i (get|be) (in|admitted|accepted)\b",
-    r"\bcan i get (in|into|admission)\b",
+    r"\bcan i get (into|admission|in(?! touch))\b",
     r"\bam i (eligible|qualified)\b",
 ]
+# "How do I reach a person at nextED?" - however it is worded. Kept to
+# phrasings about reaching nextED itself, so "the number of universities" or
+# "should I contact the university" do not trigger the fixed contact reply.
 _CONTACT = [
+    r"\b(talk|speak|meet|chat|connect)\b.{0,25}\b(counsel+or|advis[eo]r|consultant|someone|somebody|a person|a human|an agent|nexted|your team|your office|you)\b",
+    r"\b(get|be|stay|keep) in touch\b",
+    r"\b(call|phone|ring|whatsapp|text|message|e-?mail)\b.{0,6}\bme\b",
+    r"\b(contact|reach|call|phone|ring|whatsapp|e-?mail|message)\b.{0,25}\b(you|nexted|counsel+or|office|your team|advis[eo]r|consultant)\b",
+    r"\b(counsel+or|consultant|advis[eo]r)\b.{0,30}\b(contact|reach|talk|speak|meet|call|appointment|book|available)\b",
+    r"\b(book|schedule|arrange|make|get|fix|set up)\b.{0,20}\b(appointment|consultation|meeting|session)\b",
+    r"\b(appointment|consultation)\b",
     r"\b(where|what)\b.{0,20}\b(office|address|located|location)\b",
-    r"\b(phone|contact|call|number|map|directions?)\b",
-    r"\bvisit\b.{0,15}\b(office|you)\b",
+    r"\b(your|nexted'?s?)\b.{0,12}\b(phone|number|contact|address|e-?mail|whatsapp|office|hotline)\b",
+    r"\b(map|directions?)\b.{0,20}\b(office|you|nexted)\b",
+    r"\bvisit\b.{0,15}\b(office|you|nexted)\b",
+    r"(কাউন্সেলর|কাউন্সিলর|যোগাযোগ|অফিস|ঠিকানা|ফোন নম্বর|নাম্বার)",
 ]
 _FIND = [
     r"\b(universit|college|program|programme|course)\w*\b",
     r"\b(suggest|recommend|shortlist|options)\b",
     r"\b(deadline|intake|scholarship|admission)\b",
 ]
+
+
+# Costs that belong to someone else (the university, the embassy, rent).
+_THIRD_PARTY = r"\b(tuition|university|universities|uni|college|living|accommodation|rent|visa|embassy|ihs|health surcharge|ielts|toefl|pte|duolingo|application fee|deposit|flight|ticket|insurance)\b"
+_NAMES_NEXTED = r"\b(nexted|file[- ]?open|service charge|service fee|consultancy|your service|your services|your fee|your fees|your charge|working with (you|nexted))\b"
+
+
+def _third_party_cost(text: str) -> bool:
+    low = text.lower()
+    return bool(re.search(_THIRD_PARTY, low)) and not re.search(_NAMES_NEXTED, low)
 
 
 def _any(patterns: list[str], text: str) -> bool:
@@ -80,7 +140,7 @@ def classify_intent(message: str) -> Intent:
     """Narrow, must-not-improvise cases first."""
     if not message:
         return Intent.general
-    if _any(_FEE, message):
+    if _any(_FEE, message) and not _third_party_cost(message):
         return Intent.fee_question
     if _any(_DOCS, message):
         return Intent.document_checklist
@@ -99,9 +159,6 @@ _INVITATION = {
         "your chances needs someone looking at your actual transcript. One of "
         "our counsellors can do that with you - would you like me to arrange "
         "a consultation?"
-    ),
-    Intent.contact_request: (
-        "I would be glad to arrange a consultation for you."
     ),
 }
 

@@ -5,6 +5,7 @@ Nothing here is ever returned to a student.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 
@@ -28,6 +29,27 @@ def _float(name: str, default: float) -> float:
         return float(os.getenv(name, "") or default)
     except ValueError:
         return default
+
+
+def _pg_url(raw: str) -> str:
+    """A PostgreSQL URL psycopg accepts.
+
+    The IELTS app's URL is written for Prisma (`...?schema=public`); libpq
+    rejects the `schema` parameter, so it is dropped here. The schema the
+    tables go in is KB_SCHEMA instead.
+    """
+    url = raw.strip().strip('"').strip("'")
+    if "?" not in url:
+        return url
+    base, query = url.split("?", 1)
+    keep = [p for p in query.split("&") if p and not p.lower().startswith("schema=")]
+    return base + ("?" + "&".join(keep) if keep else "")
+
+
+def _schema_name(raw: str) -> str:
+    """A plain lower-case schema name, or '' (= the database default)."""
+    name = raw.strip().strip('"').lower()
+    return name if re.fullmatch(r"[a-z_][a-z0-9_]{0,62}", name) else ""
 
 
 def _load_dotenv() -> None:
@@ -97,6 +119,9 @@ class Settings:
 
     # --- knowledge base (PostgreSQL + pgvector). Empty = JSON files only.
     database_url: str = ""
+    # Schema the knowledge-base tables live in. Lets the service share the
+    # IELTS app's database without touching Prisma's `public` tables.
+    kb_schema: str = "nexted_ai"
     embeddings_provider: str = "fastembed"  # fastembed | gemini | none
     embedding_model: str = ""
     embedding_dim: int = 0
@@ -180,7 +205,8 @@ def get_settings() -> Settings:
         data_dir=os.getenv("DATA_DIR", "data"),
         seed_dir=os.getenv("SEED_DIR", "examples/seed"),
         restrictions_file=os.getenv("RESTRICTIONS_FILE", "examples/restrictions.sample.json"),
-        database_url=os.getenv("DATABASE_URL", "").strip(),
+        database_url=_pg_url(os.getenv("DATABASE_URL", "")),
+        kb_schema=_schema_name(os.getenv("KB_SCHEMA", "nexted_ai")),
         embeddings_provider=os.getenv("EMBEDDINGS_PROVIDER", "fastembed").strip().lower(),
         embedding_model=os.getenv("EMBEDDING_MODEL", "").strip(),
         embedding_dim=_int("EMBEDDING_DIM", 0),
