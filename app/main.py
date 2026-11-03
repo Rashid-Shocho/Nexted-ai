@@ -9,6 +9,7 @@ and sends their profile across.
 """
 from __future__ import annotations
 
+import hmac
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -91,7 +92,9 @@ def create_app():
             return
         if not authorization or not authorization.lower().startswith("bearer "):
             raise NotAuthenticated()
-        if authorization.split(" ", 1)[1].strip() != settings.service_token:
+        # Constant-time comparison: the time taken says nothing about the token.
+        given = authorization.split(" ", 1)[1].strip().encode()
+        if not hmac.compare_digest(given, settings.service_token.encode()):
             raise NotAuthenticated()
 
     # ------------------------------------------------------------ routes
